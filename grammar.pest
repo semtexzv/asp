@@ -1,0 +1,48 @@
+
+WHITESPACE = _{ " " | "\n" }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+NEWLINE = _{"\n" }
+
+alpha = @{ 'a'..'z' | 'A'..'Z' }
+digit = @{ '0'..'9' }
+
+ident = @{ alpha ~ (alpha | digit | "_")* }
+typename = @{ path }
+
+attr_name = @{ "#" ~ ident }
+attr = @{ attr_name ~ (" " ~ expr)? ~ NEWLINE }
+attr_list = { attr+ }
+
+str_lit = @{ "\"" ~ ident ~ "\"" }
+lit_expr = { int_lit | str_lit }
+int_lit = { digit+ }
+
+arg = { expr }
+arg_list = {  (arg ~ ("," ~ arg)*)? }
+fn_expr = { path ~ "("~ arg_list ~")" }
+
+expr = { fn_expr | lit_expr | ident_expr }
+expr_stmt = { expr ~ ";" }
+ident_expr = { ident }
+
+path_seg = { ident }
+path = { path_seg ~ ("." ~ path_seg)* }
+path_star = { path ~ ".*"? }
+import_spec = { "use" ~ path_star }
+
+if_cont = { "else" ~ block }
+if_stmt = { "if" ~ expr ~ block ~ if_cont* }
+
+stmt = { expr_stmt | if_stmt }
+stmt_list = { stmt* }
+block = { "{" ~ stmt_list ~ "}" }
+
+arg_decl = { ident ~ typename }
+arg_decl_list = { (arg_decl ~ (","  ~ arg_decl)*)? ~ ","?}
+fn_decl_args = { "(" ~ arg_decl_list ~ ")" }
+
+fn_body = { block }
+fn_decl = { attr* ~ "fn" ~ ident ~ fn_decl_args ~ (";" | fn_body) }
+
+item = { fn_decl | import_spec }
+program = { item* }
