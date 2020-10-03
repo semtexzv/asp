@@ -2,7 +2,10 @@
 WHITESPACE = _{ " " | "\n" | "\t" }
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 NEWLINE = _{"\n" }
-KEYWORD = { "fn" | "of" | "to" | "at" | "is" | "where" |  "return" | "contiune" | "break" | "yield"  }
+KEYWORD = {
+"fn" | "of" | "to" | "at" | "is" |
+"where" |  "return" | "continue" | "break" | "yield" |
+"self"}
 
 alpha = @{ 'a'..'z' | 'A'..'Z' }
 digit = @{ '0'..'9' }
@@ -18,7 +21,8 @@ attr_spec = @{ " " ~ (!(NEWLINE) ~ ANY)* }
 attr = @{ attr_name ~ attr_spec? }
 attr_list = @{ (attr ~(NEWLINE ~ attr))?  }
 
-str_lit = _{ "\"" ~ (^"\"") ~ "\"" }
+str_chars = _{ !"\"" ~ ANY }
+str_lit = { "\"" ~ str_chars* ~ "\"" }
 lit_expr = { int_lit | str_lit }
 int_lit = @{ digit+ }
 
@@ -28,13 +32,17 @@ arg_list = {  (expr ~ arg_list_more*)? ~ ","?}
 path_expr = { ident ~ ("." ~ ident)* }
 fn_tar = { brace_expr | path_expr }
 
-fn_expr = { fn_tar ~ "("~ arg_list ~ ")" }
-mod_expr = { modifier+ ~ "of" ~ expr }
+arr_suffix = { "[" ~ expr ~  ("," ~ expr)* ~ "]" }
+term = { (fn_expr | lit_expr | mod_expr | path_expr| brace_expr | loop_expr) ~ arr_suffix? }
+op = { "*" | "+" | "-" | "/" | "%" | ".." }
+expr = { term ~ (op ~ term)* }
+
+fn_expr = { fn_tar  ~ gen_clause? ~ "("~ arg_list ~ ")" }
+mod_expr = { modifier ~ expr }
 loop_expr = { "loop" ~ block }
 brace_expr = { "(" ~ expr ~ ")" }
 
-expr = !{ fn_expr | loop_expr | lit_expr | mod_expr | path_expr }
-expr_stmt = ${ expr ~ (";" | "\n") }
+expr_stmt = { expr ~ (";" | "\n")? }
 
 path_seg = { ident }
 path = { path_seg ~ ("." ~ path_seg)* }
@@ -43,6 +51,7 @@ import_spec = { "use" ~ path_star }
 
 if_cont = { "else" ~ block }
 if_stmt = { "if" ~ expr ~ block ~ if_cont* }
+ass_stmt = { var_decl }
 for_stmt = { "for" ~ ident ~ "in" ~ expr ~ block }
 
 flow_op = { "return" | "contiune" | "break" | "yield" }
@@ -50,7 +59,7 @@ flow_target = { "to" ~ ident }
 flow_stmt = { flow_op ~ expr? ~ flow_target? ~ ";"? }
 
 label = @{ ident ~ ":" }
-stmt = { if_stmt | for_stmt| loop_expr | flow_stmt | expr_stmt }
+stmt = { if_stmt | for_stmt| loop_expr | flow_stmt | ass_stmt | expr_stmt }
 block_item_list = { (stmt | label)* }
 block = { modifier* ~ "{" ~ block_item_list ~ "}" }
 
@@ -67,7 +76,11 @@ where_spec_list = { where_spec ~ ("and" ~ where_spec)* }
 where_clause = { "where" ~ where_spec_list }
 
 fn_body = { block }
-fn_decl = { attr* ~ modifier* ~ "fn" ~ ident ~ gen_clause ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
+fn_decl = { attr* ~ modifier* ~ "fn" ~ ident ~ gen_clause? ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
+vis = { "pub"? }
+var_spec = { vis ~ ("let" | "mut" | "const") }
+var_def_part = { ("=" ~ expr)? ~ ";"? }
+var_decl = { var_spec ~ ident ~("is" ~ typename)? ~ var_def_part }
 
-item = { fn_decl | import_spec }
-program = { WHITESPACE* ~ item* ~ WHITESPACE* }
+item = { fn_decl | var_decl | import_spec }
+program = { WHITESPACE* ~ item* ~ WHITESPACE* ~ EOI }
