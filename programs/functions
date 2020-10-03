@@ -1,0 +1,12 @@
+
+fn hello() {
+
+}
+
+fn hellogen of T() {
+
+}
+
+fn hellogen2 of T()
+    where T is Seq {
+}

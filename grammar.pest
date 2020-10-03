@@ -3,9 +3,8 @@ WHITESPACE = _{ " " | "\n" | "\t" }
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 NEWLINE = _{"\n" }
 KEYWORD = {
-"fn" | "of" | "to" | "at" | "is" |
-"where" |  "return" | "continue" | "break" | "yield" |
-"self"}
+"fn" | "of" | "to" | "at" | "is" | "impl" |
+"where" |  "return" | "contiune" | "break" | "yield"}
 
 alpha = @{ 'a'..'z' | 'A'..'Z' }
 digit = @{ '0'..'9' }
@@ -47,7 +46,8 @@ expr_stmt = { expr ~ (";" | "\n")? }
 path_seg = { ident }
 path = { path_seg ~ ("." ~ path_seg)* }
 path_star = { path ~ ".*"? }
-import_spec = { "use" ~ path_star }
+import_item = { path_star ~ ("as" ~ ident)? }
+import_spec = { "use" ~ import_item ~( "," ~ import_item)* }
 
 if_cont = { "else" ~ block }
 if_stmt = { "if" ~ expr ~ block ~ if_cont* }
@@ -75,12 +75,18 @@ where_spec = { gen_item ~ "is" ~ typename }
 where_spec_list = { where_spec ~ ("and" ~ where_spec)* }
 where_clause = { "where" ~ where_spec_list }
 
-fn_body = { block }
-fn_decl = { attr* ~ modifier* ~ "fn" ~ ident ~ gen_clause? ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
 vis = { "pub"? }
+
 var_spec = { vis ~ ("let" | "mut" | "const") }
 var_def_part = { ("=" ~ expr)? ~ ";"? }
 var_decl = { var_spec ~ ident ~("is" ~ typename)? ~ var_def_part }
 
-item = { fn_decl | var_decl | import_spec }
+fn_body = { block }
+fn_decl = { vis ~ attr* ~ modifier* ~ "fn" ~ ident ~ gen_clause? ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
+
+struct_body = { "{" ~ (ident ~ typename ~ ("\n" | ",")?)* ~ "}" }
+struct_decl = { "struct" ~ typename ~ (";" | struct_body) }
+impl_block = { "impl" ~ typename ~ ("for" ~ typename)? ~ where_clause? ~ "{" ~ item* ~ "}" }
+
+item = { fn_decl | var_decl | import_spec | impl_block | struct_decl }
 program = { WHITESPACE* ~ item* ~ WHITESPACE* ~ EOI }
