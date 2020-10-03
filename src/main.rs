@@ -1,13 +1,8 @@
+mod syn;
 
-#[macro_use]
-extern crate pest_derive;
-
-
+use syn::*;
 use pest::Parser;
 
-#[grammar = "../grammar.pest"]
-#[derive(Parser)]
-pub struct AspParser;
 
 fn main() {
 
@@ -25,7 +20,7 @@ fn syn_tests() {
 
     for f in files {
         let data = std::fs::read_to_string(&f).unwrap();
-        let p = AspParser::parse(Rule::program, &data).unwrap();
+        let p = syn::AspParser::parse(Rule::program, &data).unwrap();
         println!("{:?} is {:#?}", &f, p);
 
     }

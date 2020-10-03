@@ -11,7 +11,10 @@ digit = @{ '0'..'9' }
 alphanum = @{alpha | digit}
 
 ident = @{ !KEYWORD ~ (alpha ~ (alphanum | "_")*) }
-typename = { (path+) ~ gen_clause? }
+
+type_tuple = { "(" ~ (typename ~ ("," ~ typename))~ ")" }
+type_path = { path+ ~ gen_clause? }
+typename = { type_path | type_tuple }
 
 modifier = @{ !("fn") ~ ident }
 
@@ -33,7 +36,11 @@ fn_tar = { brace_expr | path_expr }
 
 arr_suffix = { "[" ~ expr ~  ("," ~ expr)* ~ "]" }
 term = { (fn_expr | lit_expr | mod_expr | path_expr| brace_expr | loop_expr) ~ arr_suffix? }
-op = { "*" | "+" | "-" | "/" | "%" | ".." }
+op = {
+"*" | "+" | "-" | "/" | "%" | ".." | "=" |
+"*=" | "+=" | "-=" | "/=" | "%=" |
+"<" | ">" | "<=" | ">=" | "!="
+}
 expr = { term ~ (op ~ term)* }
 
 fn_expr = { fn_tar  ~ gen_clause? ~ "("~ arg_list ~ ")" }
@@ -82,11 +89,15 @@ var_def_part = { ("=" ~ expr)? ~ ";"? }
 var_decl = { var_spec ~ ident ~("is" ~ typename)? ~ var_def_part }
 
 fn_body = { block }
-fn_decl = { vis ~ attr* ~ modifier* ~ "fn" ~ ident ~ gen_clause? ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
+fn_decl = { vis ~ modifier* ~ "fn" ~ ident ~ gen_clause? ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
 
 struct_body = { "{" ~ (ident ~ typename ~ ("\n" | ",")?)* ~ "}" }
 struct_decl = { "struct" ~ typename ~ (";" | struct_body) }
+
+type_decl = { "type" }
+trait_item = { fn_decl | type_decl }
+trait_decl = { vis ~ "trait" ~ typename ~ "{" ~ trait_item* ~ "}" }
 impl_block = { "impl" ~ typename ~ ("for" ~ typename)? ~ where_clause? ~ "{" ~ item* ~ "}" }
 
-item = { fn_decl | var_decl | import_spec | impl_block | struct_decl }
+item = { attr* ~(fn_decl | trait_decl | struct_decl | var_decl | import_spec | impl_block) }
 program = { WHITESPACE* ~ item* ~ WHITESPACE* ~ EOI }
