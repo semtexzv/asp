@@ -3,7 +3,7 @@ WHITESPACE = _{ " " | "\n" | "\t" }
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 NEWLINE = _{"\n" }
 KEYWORD = {
-"fn" | "of" | "to" | "at" | "is" | "impl" |
+"fn" | "of" | "to" | "at" | "is" | "impl" | "enum" |
 "where" |  "return" | "contiune" | "break" | "yield"}
 
 alpha = @{ 'a'..'z' | 'A'..'Z' }
@@ -18,9 +18,9 @@ typename = { type_path | type_tuple }
 
 modifier = @{ !("fn") ~ ident }
 
-attr_name = @{ "#" ~ ident }
-attr_spec = @{ " " ~ (!(NEWLINE) ~ ANY)* }
-attr = @{ attr_name ~ attr_spec? }
+attr_name = ${ "#" ~ ident }
+attr_spec = ${ (!(NEWLINE) ~ ANY)* }
+attr = ${ attr_name ~ (" " ~ attr_spec)? }
 attr_list = @{ (attr ~(NEWLINE ~ attr))?  }
 
 str_chars = _{ !"\"" ~ ANY }
@@ -61,13 +61,13 @@ if_stmt = { "if" ~ expr ~ block ~ if_cont* }
 ass_stmt = { var_decl }
 for_stmt = { "for" ~ ident ~ "in" ~ expr ~ block }
 
-flow_op = { "return" | "contiune" | "break" | "yield" }
-flow_target = { "to" ~ ident }
-flow_stmt = { flow_op ~ expr? ~ flow_target? ~ ";"? }
+flow_op = !{ "return" | "continue" | "break" | "yield" }
+flow_target = !{ "to" ~ ident }
+flow_stmt = !{ flow_op ~ expr? ~ flow_target? ~ ";"? }
 
 label = @{ ident ~ ":" }
 stmt = { if_stmt | for_stmt| loop_expr | flow_stmt | ass_stmt | expr_stmt }
-block_item_list = { (stmt | label)* }
+block_item_list = { (label | stmt)* }
 block = { modifier* ~ "{" ~ block_item_list ~ "}" }
 
 arg_decl = { ident ~ typename }
@@ -88,16 +88,26 @@ var_spec = { vis ~ ("let" | "mut" | "const") }
 var_def_part = { ("=" ~ expr)? ~ ";"? }
 var_decl = { var_spec ~ ident ~("is" ~ typename)? ~ var_def_part }
 
-fn_body = { block }
-fn_decl = { vis ~ modifier* ~ "fn" ~ ident ~ gen_clause? ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
 
-struct_body = { "{" ~ (ident ~ typename ~ ("\n" | ",")?)* ~ "}" }
-struct_decl = { "struct" ~ typename ~ (";" | struct_body) }
+typename_def = { ident ~ gen_clause? }
+
+fn_body = { block }
+fn_decl = { vis ~ modifier* ~ "fn" ~ typename_def ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
+
+struct_item = { (ident ~ typename ~ ("\n" | ",")?) }
+struct_body = { "{" ~ struct_item* ~ "}" }
+tuple_struct_item = {vis? ~ typename }
+tuple_struct_body = { ("(" ~ (tuple_struct_item ~ ("," ~ tuple_struct_item)*)? ~ ")")* }
+struct_decl = { vis ~ "struct" ~ typename_def ~ (";" | struct_body | tuple_struct_body) }
+
+enum_variant = { ident ~ ( struct_body  | tuple_struct_body )? }
+enum_body = { "{" ~ ( ";"? ~ enum_variant)* ~ "}" }
+enum_decl = { vis ~ "enum" ~ typename_def ~ enum_body }
 
 type_decl = { "type" }
 trait_item = { fn_decl | type_decl }
 trait_decl = { vis ~ "trait" ~ typename ~ "{" ~ trait_item* ~ "}" }
 impl_block = { "impl" ~ typename ~ ("for" ~ typename)? ~ where_clause? ~ "{" ~ item* ~ "}" }
 
-item = { attr* ~(fn_decl | trait_decl | struct_decl | var_decl | import_spec | impl_block) }
+item = { attr* ~(fn_decl | trait_decl | struct_decl | enum_decl | var_decl | import_spec | impl_block) }
 program = { WHITESPACE* ~ item* ~ WHITESPACE* ~ EOI }

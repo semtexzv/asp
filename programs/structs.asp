@@ -1,4 +1,7 @@
 
+#derive Clone, Copy
+struct Newtype(pub uint)
+
 struct Name {
     value string
 }
