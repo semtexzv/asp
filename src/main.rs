@@ -1,8 +1,8 @@
 mod syn;
+mod prelude;
 
-use syn::*;
-use pest::Parser;
-
+use crate::prelude::*;
+pub use syn::*;
 
 fn main() {
 
@@ -20,8 +20,8 @@ fn syn_tests() {
 
     for f in files {
         let data = std::fs::read_to_string(&f).unwrap();
-        let p = syn::AspParser::parse(Rule::program, &data).unwrap();
-        println!("{:?} is {:#?}", &f, p);
+        let file = syn::File::parse(&data).unwrap();
+        println!("{:?} is {:#?}", &f, file);
 
     }
 }

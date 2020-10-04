@@ -84,7 +84,7 @@ where_clause = { "where" ~ where_spec_list }
 
 vis = { "pub"? }
 
-var_spec = { vis ~ ("let" | "mut" | "const") }
+var_spec = { "let" | "mut" | "const" }
 var_def_part = { ("=" ~ expr)? ~ ";"? }
 var_decl = { var_spec ~ ident ~("is" ~ typename)? ~ var_def_part }
 
@@ -92,22 +92,22 @@ var_decl = { var_spec ~ ident ~("is" ~ typename)? ~ var_def_part }
 typename_def = { ident ~ gen_clause? }
 
 fn_body = { block }
-fn_decl = { vis ~ modifier* ~ "fn" ~ typename_def ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
+fn_decl = { modifier* ~ "fn" ~ typename_def ~ fn_decl_args ~ typename? ~ where_clause? ~ (";" | fn_body) }
 
 struct_item = { (ident ~ typename ~ ("\n" | ",")?) }
 struct_body = { "{" ~ struct_item* ~ "}" }
-tuple_struct_item = {vis? ~ typename }
+tuple_struct_item = { vis? ~ typename }
 tuple_struct_body = { ("(" ~ (tuple_struct_item ~ ("," ~ tuple_struct_item)*)? ~ ")")* }
-struct_decl = { vis ~ "struct" ~ typename_def ~ (";" | struct_body | tuple_struct_body) }
+struct_decl = { "struct" ~ typename_def ~ (";" | struct_body | tuple_struct_body) }
 
 enum_variant = { ident ~ ( struct_body  | tuple_struct_body )? }
 enum_body = { "{" ~ ( ";"? ~ enum_variant)* ~ "}" }
-enum_decl = { vis ~ "enum" ~ typename_def ~ enum_body }
+enum_decl = { "enum" ~ typename_def ~ enum_body }
 
 type_decl = { "type" ~ typename_def ~ "=" ~ typename }
-trait_item = { fn_decl | type_decl }
-trait_decl = { vis ~ "trait" ~ typename ~ "{" ~ trait_item* ~ "}" }
+trait_item = { vis? ~ (fn_decl | type_decl) }
+trait_decl = { "trait" ~ typename ~ "{" ~ trait_item* ~ "}" }
 impl_block = { "impl" ~ typename ~ ("for" ~ typename)? ~ where_clause? ~ "{" ~ item* ~ "}" }
 
-item = { attr* ~((fn_decl | type_decl | trait_decl | struct_decl | enum_decl | var_decl | import_spec | impl_block) ~ ";"? ) }
+item = { attr* ~ vis? ~((fn_decl | type_decl | trait_decl | struct_decl | enum_decl | var_decl | import_spec | impl_block) ~ ";"? ) }
 program = { WHITESPACE* ~ item* ~ WHITESPACE* ~ EOI }
