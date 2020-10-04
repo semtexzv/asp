@@ -3,7 +3,7 @@ WHITESPACE = _{ " " | "\n" | "\t" }
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 NEWLINE = _{"\n" }
 KEYWORD = {
-"fn" | "of" | "to" | "at" | "is" | "impl" | "enum" |
+"fn" | "of" | "to" | "at" | "is" | "impl" | "enum" | "and" |
 "where" |  "return" | "contiune" | "break" | "yield"}
 
 alpha = @{ 'a'..'z' | 'A'..'Z' }
@@ -12,7 +12,7 @@ alphanum = @{alpha | digit}
 
 ident = @{ !KEYWORD ~ (alpha ~ (alphanum | "_")*) }
 
-type_tuple = { "(" ~ (typename ~ ("," ~ typename))~ ")" }
+type_tuple = { "(" ~ (typename ~ ("," ~ typename)*)? ~ ","? ~ ")" }
 type_path = { path+ ~ gen_clause? }
 typename = { type_path | type_tuple }
 
@@ -74,7 +74,7 @@ arg_decl = { ident ~ typename }
 arg_decl_list = { (arg_decl ~ (","  ~ arg_decl)*)? ~ ","?}
 fn_decl_args = { "(" ~ arg_decl_list ~ ")" }
 
-gen_item = { path }
+gen_item = { typename }
 gen_item_list = { (gen_item ~ ("," ~ gen_item)*)? }
 gen_clause = { "of" ~ gen_item_list }
 
@@ -104,10 +104,10 @@ enum_variant = { ident ~ ( struct_body  | tuple_struct_body )? }
 enum_body = { "{" ~ ( ";"? ~ enum_variant)* ~ "}" }
 enum_decl = { vis ~ "enum" ~ typename_def ~ enum_body }
 
-type_decl = { "type" }
+type_decl = { "type" ~ typename_def ~ "=" ~ typename }
 trait_item = { fn_decl | type_decl }
 trait_decl = { vis ~ "trait" ~ typename ~ "{" ~ trait_item* ~ "}" }
 impl_block = { "impl" ~ typename ~ ("for" ~ typename)? ~ where_clause? ~ "{" ~ item* ~ "}" }
 
-item = { attr* ~(fn_decl | trait_decl | struct_decl | enum_decl | var_decl | import_spec | impl_block) }
+item = { attr* ~((fn_decl | type_decl | trait_decl | struct_decl | enum_decl | var_decl | import_spec | impl_block) ~ ";"? ) }
 program = { WHITESPACE* ~ item* ~ WHITESPACE* ~ EOI }
