@@ -1,10 +1,9 @@
-use std.mem
-use std.io
+use std.mem, std.io
 
 const a is Map of int, int = Map.new()
 
 fn alloc of T () ref T where T is Sized {
-    mem.currentAllocator.alloc(mem.layout of T())
+    mem.currentAllocator.alloc(mem.layout of T());
 }
 
 #inline T, V always

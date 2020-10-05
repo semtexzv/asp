@@ -3,8 +3,9 @@ WHITESPACE = _{ " " | "\n" | "\t" }
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 NEWLINE = _{"\n" }
 KEYWORD = {
-"fn" | "of" | "to" | "at" | "is" | "impl" | "enum" | "and" |
-"where" |  "return" | "contiune" | "break" | "yield"}
+"fn" | "of" | "to" | "at" | "is" | "impl" | "enum" | "and" | "void" |
+"where" |  "return" | "contiune" | "break" | "yield"
+}
 
 alpha = @{ 'a'..'z' | 'A'..'Z' }
 digit = @{ '0'..'9' }
